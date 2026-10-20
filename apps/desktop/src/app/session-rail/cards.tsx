@@ -120,6 +120,42 @@ function ContextCard() {
     }
   }, [refresh, tick])
 
+  // A payload with no window came from the backend's stored-transcript path —
+  // it had no resident agent at fetch time. That is the right answer for an old
+  // session, but it is the WRONG answer for a session that is merely mid-resume:
+  // its live breakdown (with a window and the full category list) appears a
+  // moment later, and nothing in the rail's trigger set notices. The card would
+  // then sit on a transcript-only estimate — visibly disagreeing with the
+  // statusbar gauge, which refetches on its own triggers.
+  //
+  // So while the payload is transcript-only, keep asking on a slow cadence. The
+  // first windowed answer ends the loop; the hook's normal triggers take over.
+  // Bounded: a session that is genuinely not resident (an old conversation, never
+  // resumed) will never upgrade, and the stored path is a transcript walk — it
+  // must not run forever. After the cap, the header's refresh is the way back.
+  const awaitingLiveAgent = !loading && breakdown !== null && !(breakdown.context_max > 0)
+
+  useEffect(() => {
+    if (!awaitingLiveAgent) {
+      return
+    }
+
+    // The budget lives in this closure: when a windowed payload arrives the
+    // effect cleans up, so the count resets exactly when it should.
+    let attempts = 0
+
+    const timer = setInterval(() => {
+      if (attempts >= 8) {
+        return
+      }
+
+      attempts += 1
+      refresh()
+    }, 15_000)
+
+    return () => clearInterval(timer)
+  }, [awaitingLiveAgent, refresh])
+
   if (!breakdown) {
     // The empty state has to be TRUE. A stored conversation that has not been
     // resumed into a live agent has no context to measure — but saying "No

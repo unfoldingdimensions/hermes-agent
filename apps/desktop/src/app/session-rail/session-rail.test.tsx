@@ -2,6 +2,7 @@ import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { $hiddenRailCards, _resetHiddenRailCards, persistHiddenCards } from './card-visibility'
+import { _resetRailRefreshForTests } from './refresh'
 
 import { SessionRailPane } from './index'
 
@@ -86,15 +87,22 @@ describe('SessionRailPane', () => {
   beforeEach(() => {
     window.localStorage.clear()
     _resetHiddenRailCards()
+    // The refresh tick is a module-level atom: a test that presses the header
+    // button would otherwise leave it bumped for every later test in this file.
+    _resetRailRefreshForTests()
     mocks.listMcpServers.mockResolvedValue({ servers: [] })
     mocks.getCronJobs.mockResolvedValue([])
     mocks.getMessagingPlatforms.mockResolvedValue({ platforms: [] })
     mocks.breakdown.current = null
     mocks.breakdownReason.current = null
+    mocks.contextRefresh.current = null
   })
 
   afterEach(() => {
     cleanup()
+    // Unconditional: a test that asserts before its own `useRealTimers()` would
+    // otherwise leave fake timers installed and stall every later test here.
+    vi.useRealTimers()
     vi.restoreAllMocks()
     window.localStorage.clear()
     _resetHiddenRailCards()
@@ -140,6 +148,63 @@ describe('SessionRailPane', () => {
     })
 
     expect(refresh).toHaveBeenCalled()
+  })
+
+  it('keeps asking while the payload is transcript-only, then stops once it has a window', () => {
+    // A transcript-only payload means the backend had no resident agent at fetch
+    // time. Right for an old session, wrong for one that is merely mid-resume:
+    // its live breakdown appears a moment later and nothing else in the rail's
+    // trigger set notices, so the card would sit on a stale estimate while the
+    // statusbar gauge showed the live figure.
+    vi.useFakeTimers()
+    const refresh = vi.fn()
+    mocks.contextRefresh.current = refresh
+    mocks.breakdown.current = {
+      categories: [{ color: '#7c9ef5', id: 'conversation', label: 'Conversation', tokens: 226_900 }],
+      context_max: 0,
+      context_percent: 0,
+      context_used: 226_900,
+      estimated_total: 226_900
+    }
+
+    render(<SessionRailPane />)
+    expect(refresh).not.toHaveBeenCalled()
+
+    act(() => {
+      vi.advanceTimersByTime(15_000)
+    })
+    expect(refresh).toHaveBeenCalledTimes(1)
+
+    // Bounded — a genuinely non-resident session never upgrades, and the stored
+    // path is a transcript walk.
+    act(() => {
+      vi.advanceTimersByTime(15_000 * 20)
+    })
+    expect(refresh.mock.calls.length).toBeLessThanOrEqual(8)
+
+    vi.useRealTimers()
+  })
+
+  it('does not poll once the payload carries a window', () => {
+    vi.useFakeTimers()
+    const refresh = vi.fn()
+    mocks.contextRefresh.current = refresh
+    mocks.breakdown.current = {
+      categories: [{ color: '#7c9ef5', id: 'conversation', label: 'Conversation', tokens: 400_000 }],
+      context_max: 1_000_000,
+      context_percent: 41,
+      context_used: 412_000,
+      estimated_total: 410_000
+    }
+
+    render(<SessionRailPane />)
+
+    act(() => {
+      vi.advanceTimersByTime(60_000)
+    })
+    expect(refresh).not.toHaveBeenCalled()
+
+    vi.useRealTimers()
   })
 
   it('omits the share when the window is unknown, instead of claiming 0%', () => {
