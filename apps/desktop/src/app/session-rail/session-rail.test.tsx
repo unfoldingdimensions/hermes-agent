@@ -142,6 +142,45 @@ describe('SessionRailPane', () => {
     expect(refresh).toHaveBeenCalled()
   })
 
+  it('omits the share when the window is unknown, instead of claiming 0%', () => {
+    // A stored (non-resident) session is measured from its transcript alone and
+    // the backend deliberately does not resolve a window for it, so the share is
+    // 0 by construction. "0%" over an empty bar next to a measured 212.7k reads
+    // as "nothing used" — the opposite of what the number says.
+    mocks.breakdown.current = {
+      categories: [{ color: '#7c9ef5', id: 'conversation', label: 'Conversation', tokens: 212_700 }],
+      context_max: 0,
+      context_percent: 0,
+      context_used: 212_700,
+      estimated_total: 212_700
+    }
+
+    const { container } = render(<SessionRailPane />)
+
+    const card = container.querySelector('[data-card="context"]')
+    expect(card).not.toBeNull()
+
+    // The total is there...
+    expect(card!.textContent).toContain('212.7k')
+    // ...and no percentage is invented for it.
+    expect(card!.textContent).not.toContain('0%')
+  })
+
+  it('shows the share when the window IS known', () => {
+    mocks.breakdown.current = {
+      categories: [{ color: '#7c9ef5', id: 'conversation', label: 'Conversation', tokens: 400_000 }],
+      context_max: 1_000_000,
+      context_percent: 41,
+      context_used: 412_000,
+      estimated_total: 410_000
+    }
+
+    const { container } = render(<SessionRailPane />)
+
+    const card = container.querySelector('[data-card="context"]')
+    expect(card!.textContent).toContain('41%')
+  })
+
   it('says the session is not loaded, rather than claiming there is no context', () => {
     // A stored conversation that has not been resumed into a live agent has
     // no context to measure — but "No context yet" about a 122-message

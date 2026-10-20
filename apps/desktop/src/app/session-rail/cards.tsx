@@ -143,18 +143,28 @@ function ContextCard() {
   const percent = Math.max(0, Math.min(100, Math.round(breakdown.context_percent ?? 0)))
   const used = breakdown.context_used ?? 0
   const max = breakdown.context_max ?? 0
+  // No window, no share. A stored (non-resident) session is measured from its
+  // transcript alone, and the backend deliberately does not resolve a window for
+  // it — so `percent` is 0 by construction. Rendering "0%" over an empty bar
+  // next to a measured 212.7k reads as "nothing used", which is the opposite of
+  // what the number says. Show the total and omit the share.
+  const hasWindow = max > 0
 
   return (
     <CardShell
       cardId="context"
-      trailing={<span className="text-muted-foreground/90 tabular-nums">{percent}%</span>}
+      trailing={
+        hasWindow ? <span className="text-muted-foreground/90 tabular-nums">{percent}%</span> : null
+      }
     >
-      <div className="bg-muted/40 mb-2 h-1.5 w-full overflow-hidden rounded-full">
-        <div
-          className={cn('h-full rounded-full', percent > 85 ? 'bg-destructive' : 'bg-foreground/60')}
-          style={{ width: `${percent}%` }}
-        />
-      </div>
+      {hasWindow ? (
+        <div className="bg-muted/40 mb-2 h-1.5 w-full overflow-hidden rounded-full">
+          <div
+            className={cn('h-full rounded-full', percent > 85 ? 'bg-destructive' : 'bg-foreground/60')}
+            style={{ width: `${percent}%` }}
+          />
+        </div>
+      ) : null}
 
       {/* The absolute figure the percentage is computed from. Without it the
           card shows a share of a window the reader cannot see the size of, and
