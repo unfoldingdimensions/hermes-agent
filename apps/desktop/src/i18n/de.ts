@@ -49,6 +49,7 @@ export const deOverrides = {
       },
       context: {
         title: 'Kontext',
+        used: 'Belegt',
         empty: 'Noch kein Kontext',
         loading: 'Wird geladen…'
       },

@@ -48,6 +48,7 @@ export const jaOverrides = {
       },
       context: {
         title: 'コンテキスト',
+        used: '使用済み',
         empty: 'コンテキストはまだありません',
         loading: '読み込み中…'
       },

@@ -43,6 +43,7 @@ export const arOverrides = {
       },
       context: {
         title: 'السياق',
+        used: 'مستخدم',
         empty: 'لا يوجد سياق بعد',
         loading: 'جارٍ التحميل…'
       },

@@ -8,7 +8,8 @@ import { SessionRailPane } from './index'
 const mocks = vi.hoisted(() => ({
   listMcpServers: vi.fn(),
   getCronJobs: vi.fn(),
-  getMessagingPlatforms: vi.fn()
+  getMessagingPlatforms: vi.fn(),
+  breakdown: { current: null as null | Record<string, unknown> }
 }))
 
 vi.mock('@/api/mcp', () => ({ listMcpServers: mocks.listMcpServers }))
@@ -20,7 +21,7 @@ vi.mock('@/app/gateway/hooks/use-gateway-request', () => ({
 }))
 
 vi.mock('@/app/shell/hooks/use-context-breakdown', () => ({
-  useContextBreakdown: () => ({ breakdown: null, loading: false })
+  useContextBreakdown: () => ({ breakdown: mocks.breakdown.current, loading: false })
 }))
 
 vi.mock('@/store/coding-status', async () => {
@@ -64,7 +65,7 @@ vi.mock('@/i18n', () => ({
           background: { title: 'Background', empty: 'Nothing running', running: 'running', more: 'more', scheduled: 'Scheduled jobs' },
           changes: { title: 'Changes', clean: 'Working tree clean', staged: 'Staged', unstaged: 'Modified', untracked: 'Untracked', conflicted: 'Conflicted', lines: 'Lines' },
           connectors: { title: 'Connectors', empty: 'No connectors connected', loading: 'Loading…', on: 'On', off: 'Off' },
-          context: { title: 'Context', empty: 'No context yet', loading: 'Loading…' },
+          context: { title: 'Context', used: 'Used', empty: 'No context yet', loading: 'Loading…' },
           environment: { title: 'Environment', empty: 'No folder', folder: 'Folder', branch: 'Branch', sync: 'Sync', inSync: 'In sync', worktrees: 'Worktrees' },
           servers: { title: 'Servers', empty: 'No MCP servers', loading: 'Loading…', more: 'more' }
         }
@@ -80,6 +81,7 @@ describe('SessionRailPane', () => {
     mocks.listMcpServers.mockResolvedValue({ servers: [] })
     mocks.getCronJobs.mockResolvedValue([])
     mocks.getMessagingPlatforms.mockResolvedValue({ platforms: [] })
+    mocks.breakdown.current = null
   })
 
   afterEach(() => {
@@ -112,6 +114,50 @@ describe('SessionRailPane', () => {
 
     expect(screen.getByText('No context yet')).toBeTruthy()
     expect(screen.getByText('Working tree clean')).toBeTruthy()
+  })
+
+  it('shows the absolute context total, and EVERY category', () => {
+    // The card once showed a bare percentage and only the first five
+    // categories. The transcript is the biggest category by far and it is
+    // LAST in the backend's display order, so truncating the list hid the one
+    // number that explained the gap between the rows and the total: the rows
+    // summed to ~22k while the session was really using 382.6k.
+    mocks.breakdown.current = {
+      // The REAL category list, in the backend's display order. Eight of them,
+      // so a card that truncates the list to five drops the last three —
+      // including the transcript, the largest one.
+      categories: [
+        { color: '', id: 'system_prompt', label: 'System prompt', tokens: 9600 },
+        { color: '', id: 'tool_definitions', label: 'Tool definitions', tokens: 10100 },
+        { color: '', id: 'rules', label: 'Rules', tokens: 412 },
+        { color: '', id: 'skills', label: 'Skills', tokens: 900 },
+        { color: '', id: 'mcp', label: 'MCP', tokens: 200 },
+        { color: '', id: 'subagent_definitions', label: 'Subagent definitions', tokens: 1200 },
+        { color: '', id: 'memory', label: 'Memory', tokens: 1100 },
+        { color: '', id: 'conversation', label: 'Conversation', tokens: 350000 }
+      ],
+      context_max: 1000000,
+      context_percent: 38,
+      context_used: 382600,
+      estimated_total: 369700
+    }
+
+    render(<SessionRailPane />)
+
+    // The absolute figure the percentage is computed from, and the window.
+    expect(screen.getByText('Used')).toBeTruthy()
+    expect(screen.getByText('382.6k / 1M')).toBeTruthy()
+    expect(screen.getByText('38%')).toBeTruthy()
+
+    // Every category, including the ones the truncation used to drop.
+    expect(screen.getByText('System prompt')).toBeTruthy()
+    expect(screen.getByText('Tool definitions')).toBeTruthy()
+    expect(screen.getByText('Subagent definitions')).toBeTruthy()
+    expect(screen.getByText('Memory')).toBeTruthy()
+    expect(screen.getByText('Conversation')).toBeTruthy()
+    // The category rows are local estimates, so they are marked as such.
+    expect(screen.getByText('~9.6k')).toBeTruthy()
+    expect(screen.getByText('~350k')).toBeTruthy()
   })
 
   it('hides a card when it is toggled off', () => {

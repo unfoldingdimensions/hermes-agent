@@ -49,6 +49,7 @@ export const frOverrides = {
       },
       context: {
         title: 'Contexte',
+        used: 'Utilisé',
         empty: 'Pas encore de contexte',
         loading: 'Chargement…'
       },

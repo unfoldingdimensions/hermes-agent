@@ -67,6 +67,7 @@ export const ruOverrides = {
       },
       context: {
         title: 'Контекст',
+        used: 'Использовано',
         empty: 'Контекста пока нет',
         loading: 'Загрузка…'
       },

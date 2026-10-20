@@ -53,6 +53,7 @@ export const en: Translations = {
       },
       context: {
         title: 'Context',
+        used: 'Used',
         empty: 'No context yet',
         loading: 'Loading…'
       },

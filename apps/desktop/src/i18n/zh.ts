@@ -46,6 +46,7 @@ export const zhOverrides = {
       },
       context: {
         title: '上下文',
+        used: '已用',
         empty: '暂无上下文',
         loading: '加载中…'
       },

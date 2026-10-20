@@ -49,6 +49,7 @@ export const esOverrides = {
       },
       context: {
         title: 'Contexto',
+        used: 'Usado',
         empty: 'Aún no hay contexto',
         loading: 'Cargando…'
       },

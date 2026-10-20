@@ -113,6 +113,8 @@ export interface Translations extends NoticeTranslations {
       }
       context: {
         title: string
+        /** The absolute context figure, alongside the share of the window. */
+        used: string
         empty: string
         loading: string
       }

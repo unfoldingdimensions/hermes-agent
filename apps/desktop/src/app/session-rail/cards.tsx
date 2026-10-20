@@ -84,6 +84,18 @@ function Row({ label, value }: { label: string; value: React.ReactNode }) {
 function ContextCard() {
   const { t } = useI18n()
   const copy = t.sessionRail.cards.context
+
+  // The app's own context panel already has every category label translated
+  // in every locale, so the rail reuses them instead of shipping a second
+  // set that could drift. The backend also sends a localized label per
+  // category, so a missing branch degrades to that rather than crashing —
+  // a card must never take the whole rail down.
+  const categoryLabels = (
+    t as unknown as {
+      shell?: { statusbar?: { contextUsagePanel?: { categories?: Record<string, string> } } }
+    }
+  ).shell?.statusbar?.contextUsagePanel?.categories
+
   const sessionId = useStore($focusedRuntimeId)
   const { requestGateway } = useGatewayRequest()
 
@@ -105,6 +117,8 @@ function ContextCard() {
   }
 
   const percent = Math.max(0, Math.min(100, Math.round(breakdown.context_percent ?? 0)))
+  const used = breakdown.context_used ?? 0
+  const max = breakdown.context_max ?? 0
 
   return (
     <CardShell
@@ -117,8 +131,35 @@ function ContextCard() {
           style={{ width: `${percent}%` }}
         />
       </div>
-      {breakdown.categories.slice(0, 5).map(category => (
-        <Row key={category.id} label={category.label} value={compactNumber(category.tokens)} />
+
+      {/* The absolute figure the percentage is computed from. Without it the
+          card shows a share of a window the reader cannot see the size of, and
+          the rows below look like they should add up to it — they do not,
+          because these are the PROMPT's composition, not the whole context. */}
+      <Row
+        label={copy.used}
+        value={
+          <span className="text-foreground">
+            {breakdown.context_estimated ? '~' : ''}
+            {compactNumber(used)}
+            {max ? ` / ${compactNumber(max)}` : ''}
+          </span>
+        }
+      />
+
+      {/* EVERY category, not the first few. The transcript is the largest
+          one by far and it is the last in the backend's display order, so
+          truncating the list hid the very number that explains the gap. Each
+          row is a local chars/4 estimate of the PROMPT's composition, so it
+          is marked `~` — the app's own context panel marks them the same way.
+          The rows sum to `estimated_total`, which is close to but not equal
+          to the provider-measured total above. */}
+      {breakdown.categories.map(category => (
+        <Row
+          key={category.id}
+          label={categoryLabels?.[category.id] ?? category.label}
+          value={`~${compactNumber(category.tokens)}`}
+        />
       ))}
     </CardShell>
   )

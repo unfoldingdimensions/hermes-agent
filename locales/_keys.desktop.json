@@ -2648,6 +2648,7 @@
     "sessionRail.cards.context.empty",
     "sessionRail.cards.context.loading",
     "sessionRail.cards.context.title",
+    "sessionRail.cards.context.used",
     "sessionRail.cards.environment.branch",
     "sessionRail.cards.environment.empty",
     "sessionRail.cards.environment.folder",
