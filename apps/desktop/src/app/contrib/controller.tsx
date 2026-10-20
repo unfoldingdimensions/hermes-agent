@@ -5,6 +5,7 @@ import type { CSSProperties, ReactElement, PointerEvent as ReactPointerEvent } f
 import { SessionDraftTitle } from '@/app/chat/session-draft-title'
 import { SessionStatusDot } from '@/app/chat/session-status-dot'
 import { PALETTE_AREA, type PaletteContribution, paletteToggle } from '@/app/command-palette/contrib'
+import { SessionRailPane } from '@/app/session-rail'
 import { type StatusbarItem } from '@/app/shell/statusbar-controls'
 import { InlinePreviewDirective } from '@/components/assistant-ui/inline-preview-directive'
 import { IdleMount } from '@/components/idle-mount'
@@ -64,6 +65,9 @@ import {
   FILE_BROWSER_MAX_WIDTH,
   FILE_BROWSER_MIN_WIDTH,
   fileBrowserSide,
+  SESSION_RAIL_DEFAULT_WIDTH,
+  SESSION_RAIL_MAX_WIDTH,
+  SESSION_RAIL_MIN_WIDTH,
   setFileBrowserOpen,
   setSidebarOpen,
   SIDEBAR_DEFAULT_WIDTH,
@@ -286,6 +290,52 @@ registry.registerMany([
       tabTitleText: () => translateNow('sidebar.review')
     },
     render: () => idle(<ReviewPaneContent />)
+  },
+  {
+    id: 'session-rail',
+    area: 'panes',
+    title: translateNow('sessionRail.title'),
+    // The session rail: a narrow column of cards describing the focused
+    // session, sitting between the conversation and the right sidebar.
+    //
+    // It is its OWN column, and that is enforced in two places. The shipped
+    // layouts name it as its own zone (see layout-presets.ts) — a placement
+    // HINT alone would not do it, because the grid editor's zone assignment
+    // (`assignZones`) stacks a hinted pane with its role-mates, which would
+    // make it a tab beside files and review. The `dock` hint is what governs
+    // the ADOPTION path — a pane registered but absent from a saved layout —
+    // and `pos: 'right'` is an EDGE SPLIT there (`insertAtGroup`), so an
+    // existing install's layout gains the rail as a sibling column too, not
+    // as a tab.
+    data: {
+      // 'main' — NOT 'right' — and that is load-bearing.
+      //
+      // The tree classifies a root-row column as a COLLAPSIBLE SIDE by
+      // position: anything right of the last main-placement pane is the
+      // 'right' side, and the whole side collapses together
+      // (`paneRootSide` → `sideGone` in tree-split.tsx). The store states
+      // the invariant outright — "main columns never side-collapse".
+      //
+      // With 'right', the rail inherited the file tree's collapse state: the
+      // user's normal state has the right side closed, so the rail rendered
+      // at zero width and was invisible. The cards were live in the DOM the
+      // whole time, which is why only running the app caught it.
+      //
+      // 'main' also survives ADOPTION: the rail is inserted as a root-level
+      // sibling of the workspace, and a main-placement pane is its own side
+      // boundary — so `paneRootSide` returns null for it in the shipped tree
+      // AND in a tree adopted into an existing install. The files/review
+      // zone stays 'right' and keeps collapsing exactly as before.
+      placement: 'main',
+      collapsible: true,
+      dock: { pane: 'workspace', pos: 'right' },
+      width: SESSION_RAIL_DEFAULT_WIDTH,
+      minWidth: SESSION_RAIL_MIN_WIDTH,
+      maxWidth: SESSION_RAIL_MAX_WIDTH,
+      tabTitle: () => <LocalizedTabTitle select={t => t.sessionRail.title} />,
+      tabTitleText: () => translateNow('sessionRail.title')
+    },
+    render: () => idle(<SessionRailPane />)
   }
 ])
 

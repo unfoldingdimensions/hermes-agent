@@ -40,6 +40,14 @@ export const FILE_BROWSER_DEFAULT_WIDTH = `${SIDEBAR_DEFAULT_WIDTH}px`
 export const FILE_BROWSER_MIN_WIDTH = '10rem'
 export const FILE_BROWSER_MAX_WIDTH = '20rem'
 
+// The session rail — a narrow column of cards describing the focused session,
+// sitting between the conversation and the right sidebar. Its cards are
+// label/value rows, so it wants less room than a file tree but enough for a
+// label and a number without truncating either.
+export const SESSION_RAIL_DEFAULT_WIDTH = '15rem'
+export const SESSION_RAIL_MIN_WIDTH = '11rem'
+export const SESSION_RAIL_MAX_WIDTH = '22rem'
+
 export const SIDEBAR_SESSIONS_PAGE_SIZE = 50
 // How deep the list reaches once a filter is on. A filter that only searches
 // the loaded page answers the wrong question — "6 merged PRs" really meant "6

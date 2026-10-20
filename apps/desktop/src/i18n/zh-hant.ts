@@ -14,6 +14,56 @@ import { zhHantFirstRun } from './zh-hant_first_run'
 import { zhHantSettings } from './zh-hant_settings'
 
 export const zhHantOverrides = {
+  sessionRail: {
+    title: '工作階段',
+    configureCards: '卡片',
+    noCards: '未顯示任何卡片。使用「卡片」選擇要顯示的內容。',
+    cards: {
+      background: {
+        title: '背景',
+        empty: '沒有執行中的工作',
+        running: '執行中',
+        more: '更多',
+        scheduled: '排程工作'
+      },
+      changes: {
+        title: '變更',
+        clean: '工作樹乾淨',
+        staged: '已暫存',
+        unstaged: '已修改',
+        untracked: '未追蹤',
+        conflicted: '衝突',
+        lines: '行數'
+      },
+      connectors: {
+        title: '連接器',
+        empty: '沒有已連接的連接器',
+        loading: '載入中…',
+        on: '開',
+        off: '關'
+      },
+      context: {
+        title: '上下文',
+        empty: '尚無上下文',
+        loading: '載入中…'
+      },
+      environment: {
+        title: '環境',
+        empty: '無資料夾',
+        folder: '資料夾',
+        branch: '分支',
+        sync: '同步',
+        inSync: '已同步',
+        worktrees: '工作樹'
+      },
+      servers: {
+        title: '伺服器',
+        empty: '無 MCP 伺服器',
+        loading: '載入中…',
+        more: '更多'
+      }
+    }
+  },
   connectors: {
     directory: {
       suggested: '推薦',

@@ -18,6 +18,56 @@ import { frUpdateChannel } from './fr_update_channel'
 import { introFr } from './intro-fr'
 
 export const frOverrides = {
+  sessionRail: {
+    title: 'Session',
+    configureCards: 'Cartes',
+    noCards: 'Aucune carte affichée. Utilisez Cartes pour choisir celles à afficher.',
+    cards: {
+      background: {
+        title: 'Arrière-plan',
+        empty: 'Rien en cours',
+        running: 'en cours',
+        more: 'de plus',
+        scheduled: 'Tâches planifiées'
+      },
+      changes: {
+        title: 'Modifications',
+        clean: 'Copie de travail propre',
+        staged: 'Indexées',
+        unstaged: 'Modifiés',
+        untracked: 'Non suivis',
+        conflicted: 'En conflit',
+        lines: 'Lignes'
+      },
+      connectors: {
+        title: 'Connecteurs',
+        empty: 'Aucun connecteur connecté',
+        loading: 'Chargement…',
+        on: 'Activé',
+        off: 'Désactivé'
+      },
+      context: {
+        title: 'Contexte',
+        empty: 'Pas encore de contexte',
+        loading: 'Chargement…'
+      },
+      environment: {
+        title: 'Environnement',
+        empty: 'Aucun dossier',
+        folder: 'Dossier',
+        branch: 'Branche',
+        sync: 'Synchronisation',
+        inSync: 'À jour',
+        worktrees: 'Worktrees'
+      },
+      servers: {
+        title: 'Serveurs',
+        empty: 'Aucun serveur MCP',
+        loading: 'Chargement…',
+        more: 'de plus'
+      }
+    }
+  },
   sharedMetrics: frSharedMetrics,
   firstRun: frFirstRun,
   intro: introFr,

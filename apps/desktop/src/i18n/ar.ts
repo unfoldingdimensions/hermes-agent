@@ -13,6 +13,56 @@ import { arSettings } from './ar_settings'
 import { defineLocale, type TranslationOverrides } from './define-locale'
 
 export const arOverrides = {
+  sessionRail: {
+    title: 'الجلسة',
+    configureCards: 'البطاقات',
+    noCards: 'لا يتم عرض أي بطاقات. استخدم البطاقات لاختيار ما تريد عرضه.',
+    cards: {
+      background: {
+        title: 'الخلفية',
+        empty: 'لا شيء قيد التشغيل',
+        running: 'قيد التشغيل',
+        more: 'المزيد',
+        scheduled: 'المهام المجدولة'
+      },
+      changes: {
+        title: 'التغييرات',
+        clean: 'شجرة العمل نظيفة',
+        staged: 'مُدرجة',
+        unstaged: 'مُعدَّلة',
+        untracked: 'غير متتبَّعة',
+        conflicted: 'متصادمة',
+        lines: 'الأسطر'
+      },
+      connectors: {
+        title: 'الموصِّلات',
+        empty: 'لا توجد موصِّلات متصلة',
+        loading: 'جارٍ التحميل…',
+        on: 'مُفعَّل',
+        off: 'مُعطَّل'
+      },
+      context: {
+        title: 'السياق',
+        empty: 'لا يوجد سياق بعد',
+        loading: 'جارٍ التحميل…'
+      },
+      environment: {
+        title: 'البيئة',
+        empty: 'لا يوجد مجلد',
+        folder: 'المجلد',
+        branch: 'الفرع',
+        sync: 'المزامنة',
+        inSync: 'متزامن',
+        worktrees: 'أشجار العمل'
+      },
+      servers: {
+        title: 'الخوادم',
+        empty: 'لا توجد خوادم MCP',
+        loading: 'جارٍ التحميل…',
+        more: 'المزيد'
+      }
+    }
+  },
   connectors: {
     directory: {
       suggested: 'مقترحة',

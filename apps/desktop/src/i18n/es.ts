@@ -18,6 +18,56 @@ import { esUpdateChannel } from './es_update_channel'
 import { introEs } from './intro-es'
 
 export const esOverrides = {
+  sessionRail: {
+    title: 'Sesión',
+    configureCards: 'Tarjetas',
+    noCards: 'No se muestran tarjetas. Usa Tarjetas para elegir cuáles mostrar.',
+    cards: {
+      background: {
+        title: 'Segundo plano',
+        empty: 'Nada en ejecución',
+        running: 'en ejecución',
+        more: 'más',
+        scheduled: 'Tareas programadas'
+      },
+      changes: {
+        title: 'Cambios',
+        clean: 'Árbol de trabajo limpio',
+        staged: 'Preparados',
+        unstaged: 'Modificados',
+        untracked: 'Sin seguimiento',
+        conflicted: 'En conflicto',
+        lines: 'Líneas'
+      },
+      connectors: {
+        title: 'Conectores',
+        empty: 'Ningún conector conectado',
+        loading: 'Cargando…',
+        on: 'Activado',
+        off: 'Desactivado'
+      },
+      context: {
+        title: 'Contexto',
+        empty: 'Aún no hay contexto',
+        loading: 'Cargando…'
+      },
+      environment: {
+        title: 'Entorno',
+        empty: 'Sin carpeta',
+        folder: 'Carpeta',
+        branch: 'Rama',
+        sync: 'Sincronización',
+        inSync: 'Sincronizado',
+        worktrees: 'Worktrees'
+      },
+      servers: {
+        title: 'Servidores',
+        empty: 'Sin servidores MCP',
+        loading: 'Cargando…',
+        more: 'más'
+      }
+    }
+  },
   sharedMetrics: esSharedMetrics,
   firstRun: esFirstRun,
   intro: introEs,

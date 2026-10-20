@@ -37,6 +37,56 @@ const RU_NOUN = (count: number | string, one: string, few: string, many: string)
 }
 
 export const ruOverrides = {
+  sessionRail: {
+    title: 'Сессия',
+    configureCards: 'Карточки',
+    noCards: 'Карточки не показаны. Выберите, какие отображать, в разделе «Карточки».',
+    cards: {
+      background: {
+        title: 'Фон',
+        empty: 'Ничего не выполняется',
+        running: 'выполняется',
+        more: 'ещё',
+        scheduled: 'Запланированные задачи'
+      },
+      changes: {
+        title: 'Изменения',
+        clean: 'Рабочее дерево чистое',
+        staged: 'В индексе',
+        unstaged: 'Изменённые',
+        untracked: 'Неотслеживаемые',
+        conflicted: 'Конфликты',
+        lines: 'Строки'
+      },
+      connectors: {
+        title: 'Коннекторы',
+        empty: 'Нет подключённых коннекторов',
+        loading: 'Загрузка…',
+        on: 'Вкл.',
+        off: 'Выкл.'
+      },
+      context: {
+        title: 'Контекст',
+        empty: 'Контекста пока нет',
+        loading: 'Загрузка…'
+      },
+      environment: {
+        title: 'Окружение',
+        empty: 'Нет папки',
+        folder: 'Папка',
+        branch: 'Ветка',
+        sync: 'Синхронизация',
+        inSync: 'Синхронизировано',
+        worktrees: 'Рабочие деревья'
+      },
+      servers: {
+        title: 'Серверы',
+        empty: 'Нет MCP-серверов',
+        loading: 'Загрузка…',
+        more: 'ещё'
+      }
+    }
+  },
   connectors: ruConnectors.connectors,
   sharedMetrics: ruSharedMetrics,
   firstRun: ruFirstRun,

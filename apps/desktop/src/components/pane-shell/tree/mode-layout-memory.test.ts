@@ -194,6 +194,15 @@ it.each(['advanced', 'simple'] as const)(
     const restoredTree = reloaded.tree.$layoutTree.get()
     const expectedTree = normalize(legacyTree)
     assert(restoredTree && expectedTree)
-    expect(reloaded.model.allPaneIds(restoredTree)).toEqual(reloaded.model.allPaneIds(expectedTree))
+    // The LEGACY arrangement survives the round-trip — that is what this test
+    // is about. A pane registered since the snapshot (the session rail) is
+    // ADOPTED into the restored tree, exactly as every previously-added pane
+    // was: `adoptContributedPanes` folds a registered-but-absent pane into the
+    // live tree so it can take part in the layout. Adoption must not displace
+    // or reorder the user's own panes, so the legacy ids must still be there,
+    // in the same relative order — the new pane may only be ADDED.
+    const restoredIds = reloaded.model.allPaneIds(restoredTree)
+    const legacyIds = reloaded.model.allPaneIds(expectedTree)
+    expect(restoredIds.filter(id => legacyIds.includes(id))).toEqual(legacyIds)
   }
 )

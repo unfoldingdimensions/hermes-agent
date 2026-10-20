@@ -22,6 +22,56 @@ import { enUpdateChannel } from './en_update_channel'
 import type { Translations } from './types'
 
 export const en: Translations = {
+  sessionRail: {
+    title: 'Session',
+    configureCards: 'Cards',
+    noCards: 'No cards shown. Use Cards to pick which ones to display.',
+    cards: {
+      background: {
+        title: 'Background',
+        empty: 'Nothing running',
+        running: 'running',
+        more: 'more',
+        scheduled: 'Scheduled jobs'
+      },
+      changes: {
+        title: 'Changes',
+        clean: 'Working tree clean',
+        staged: 'Staged',
+        unstaged: 'Modified',
+        untracked: 'Untracked',
+        conflicted: 'Conflicted',
+        lines: 'Lines'
+      },
+      connectors: {
+        title: 'Connectors',
+        empty: 'No connectors connected',
+        loading: 'Loading…',
+        on: 'On',
+        off: 'Off'
+      },
+      context: {
+        title: 'Context',
+        empty: 'No context yet',
+        loading: 'Loading…'
+      },
+      environment: {
+        title: 'Environment',
+        empty: 'No folder',
+        folder: 'Folder',
+        branch: 'Branch',
+        sync: 'Sync',
+        inSync: 'In sync',
+        worktrees: 'Worktrees'
+      },
+      servers: {
+        title: 'Servers',
+        empty: 'No MCP servers',
+        loading: 'Loading…',
+        more: 'more'
+      }
+    }
+  },
   externalOpenFailed: {
     title: 'Couldn’t open this link',
     message: 'No browser is registered to open this address. Copy the link and open it manually.',

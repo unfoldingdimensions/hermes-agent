@@ -18,6 +18,56 @@ import { jaThemePicker } from './ja_theme_picker'
 import { jaUpdateChannel } from './ja_update_channel'
 
 export const jaOverrides = {
+  sessionRail: {
+    title: 'セッション',
+    configureCards: 'カード',
+    noCards: 'カードが表示されていません。「カード」から表示するものを選んでください。',
+    cards: {
+      background: {
+        title: 'バックグラウンド',
+        empty: '実行中のものはありません',
+        running: '実行中',
+        more: '件以上',
+        scheduled: '定期実行ジョブ'
+      },
+      changes: {
+        title: '変更',
+        clean: '作業ツリーはクリーンです',
+        staged: 'ステージ済み',
+        unstaged: '変更あり',
+        untracked: '未追跡',
+        conflicted: '競合',
+        lines: '行'
+      },
+      connectors: {
+        title: 'コネクタ',
+        empty: '接続されているコネクタはありません',
+        loading: '読み込み中…',
+        on: 'オン',
+        off: 'オフ'
+      },
+      context: {
+        title: 'コンテキスト',
+        empty: 'コンテキストはまだありません',
+        loading: '読み込み中…'
+      },
+      environment: {
+        title: '環境',
+        empty: 'フォルダーなし',
+        folder: 'フォルダー',
+        branch: 'ブランチ',
+        sync: '同期',
+        inSync: '同期済み',
+        worktrees: 'ワークツリー'
+      },
+      servers: {
+        title: 'サーバー',
+        empty: 'MCP サーバーなし',
+        loading: '読み込み中…',
+        more: '件以上'
+      }
+    }
+  },
   connectors: jaConnectors.connectors,
   externalOpenFailed: {
     title: 'このリンクを開けませんでした',

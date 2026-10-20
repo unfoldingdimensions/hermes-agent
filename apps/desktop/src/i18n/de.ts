@@ -18,6 +18,56 @@ import { defineLocale, type TranslationOverrides } from './define-locale'
 import { introDe } from './intro-de'
 
 export const deOverrides = {
+  sessionRail: {
+    title: 'Sitzung',
+    configureCards: 'Karten',
+    noCards: 'Keine Karten angezeigt. Über „Karten“ auswählen, welche erscheinen sollen.',
+    cards: {
+      background: {
+        title: 'Hintergrund',
+        empty: 'Nichts läuft',
+        running: 'läuft',
+        more: 'mehr',
+        scheduled: 'Geplante Aufgaben'
+      },
+      changes: {
+        title: 'Änderungen',
+        clean: 'Arbeitsverzeichnis sauber',
+        staged: 'Bereitgestellt',
+        unstaged: 'Geändert',
+        untracked: 'Unverfolgt',
+        conflicted: 'Konflikte',
+        lines: 'Zeilen'
+      },
+      connectors: {
+        title: 'Konnektoren',
+        empty: 'Keine Konnektoren verbunden',
+        loading: 'Wird geladen…',
+        on: 'An',
+        off: 'Aus'
+      },
+      context: {
+        title: 'Kontext',
+        empty: 'Noch kein Kontext',
+        loading: 'Wird geladen…'
+      },
+      environment: {
+        title: 'Umgebung',
+        empty: 'Kein Ordner',
+        folder: 'Ordner',
+        branch: 'Branch',
+        sync: 'Synchronisierung',
+        inSync: 'Synchron',
+        worktrees: 'Worktrees'
+      },
+      servers: {
+        title: 'Server',
+        empty: 'Keine MCP-Server',
+        loading: 'Wird geladen…',
+        more: 'mehr'
+      }
+    }
+  },
   sharedMetrics: deSharedMetrics,
   firstRun: deFirstRun,
   intro: introDe,

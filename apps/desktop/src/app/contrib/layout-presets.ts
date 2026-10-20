@@ -5,9 +5,16 @@ import { registerBundledPresets } from '@/components/pane-shell/tree/presets'
 // Layout presets — CHAT (main) always dominates.
 // ---------------------------------------------------------------------------
 
-// The REAL default: sessions left, chat main, and the right sidebars in column
-// order main | … | review | file-browser (files outermost). Each is its OWN
-// zone. Review collapses to nothing while its pane is hidden (⌘G off).
+// The REAL default: sessions left, chat main, the session rail beside the
+// chat, and the right sidebars in column order main | … | review |
+// file-browser (files outermost). Each is its OWN zone. Review collapses to
+// nothing while its pane is hidden (⌘G off).
+//
+// The session rail is a SEPARATE column, not a third tab in the right zone: a
+// tab would hide the file tree whenever the rail was showing, and a card stack
+// wants a narrower fixed track than a file tree does. The rail's own width
+// comes from its pane contribution (`data.width`), so the tree only has to give
+// it a slot.
 //
 // Preview tiles are DYNAMIC panes (like session tiles), so no preset names one:
 // they're registered by watchPreviewTiles as tabs open, and dockPaneBeside lands
@@ -19,6 +26,7 @@ export const DEFAULT_TREE = split(
   [
     group(['sessions'], { id: 'grp-sessions' }),
     group(['workspace'], { id: 'grp-main' }),
+    group(['session-rail'], { id: 'grp-session-rail' }),
     split(
       'column',
       [
@@ -34,7 +42,7 @@ export const DEFAULT_TREE = split(
       'spl-right'
     )
   ],
-  [1, 3.4, 1.25],
+  [1, 3.4, 0.62, 1.25],
   'spl-root'
 )
 
@@ -53,17 +61,22 @@ const FOCUS_TREE = split(
 // files a right column that ⌘J / ⌘G open. A tree that simply omitted them was
 // a lie — applying it adopts every missing pane back in as workspace tabs,
 // which is Focus.
+//
+// The session rail rides the same rule: Basic is the "just the chat" layout,
+// so the rail is a RESTING pane — present in the tree, closed until the user
+// opens it, exactly like the file tree.
 export const BASIC_TREE = split(
   'row',
   [
     group(['sessions']),
     split('column', [group(['workspace']), group(['terminal'])], [3, 1]),
-    split('row', [group(['review']), group(['files'])], [1, 1.2])
+    split('row', [group(['review']), group(['files'])], [1, 1.2]),
+    group(['session-rail'])
   ],
-  [1, 3.4, 1.25]
+  [1, 3.4, 1.25, 0.62]
 )
 
-const BASIC_RESTING = ['terminal', 'files', 'review'] as const
+const BASIC_RESTING = ['terminal', 'files', 'review', 'session-rail'] as const
 
 const TERMINAL_TREE = split(
   'column',

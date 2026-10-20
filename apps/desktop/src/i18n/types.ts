@@ -79,6 +79,59 @@ interface ModeOptionCopy {
 }
 
 export interface Translations extends NoticeTranslations {
+  /** The session rail — a narrow column beside the conversation describing the
+   *  focused session. Every card reads an existing store; the strings here
+   *  label those cards and their empty states. */
+  sessionRail: {
+    title: string
+    configureCards: string
+    noCards: string
+    cards: {
+      background: {
+        title: string
+        empty: string
+        running: string
+        more: string
+        scheduled: string
+      }
+      changes: {
+        title: string
+        clean: string
+        staged: string
+        unstaged: string
+        untracked: string
+        conflicted: string
+        lines: string
+      }
+      connectors: {
+        title: string
+        empty: string
+        loading: string
+        on: string
+        off: string
+      }
+      context: {
+        title: string
+        empty: string
+        loading: string
+      }
+      environment: {
+        title: string
+        empty: string
+        folder: string
+        branch: string
+        sync: string
+        inSync: string
+        worktrees: string
+      }
+      servers: {
+        title: string
+        empty: string
+        loading: string
+        more: string
+      }
+    }
+  }
   /** Shared-metrics consent: first-run dialog + Settings › Safety toggles. */
   sharedMetrics: SharedMetricsTranslations
   appTour: AppTourTranslations

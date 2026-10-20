@@ -16,6 +16,56 @@ import { zhThemePicker } from './zh_theme_picker'
 import { zhUpdateChannel } from './zh_update_channel'
 
 export const zhOverrides = {
+  sessionRail: {
+    title: '会话',
+    configureCards: '卡片',
+    noCards: '未显示任何卡片。使用「卡片」选择要显示的内容。',
+    cards: {
+      background: {
+        title: '后台',
+        empty: '没有正在运行的任务',
+        running: '运行中',
+        more: '更多',
+        scheduled: '定时任务'
+      },
+      changes: {
+        title: '更改',
+        clean: '工作区干净',
+        staged: '已暂存',
+        unstaged: '已修改',
+        untracked: '未跟踪',
+        conflicted: '冲突',
+        lines: '行数'
+      },
+      connectors: {
+        title: '连接器',
+        empty: '没有已连接的连接器',
+        loading: '加载中…',
+        on: '开',
+        off: '关'
+      },
+      context: {
+        title: '上下文',
+        empty: '暂无上下文',
+        loading: '加载中…'
+      },
+      environment: {
+        title: '环境',
+        empty: '无文件夹',
+        folder: '文件夹',
+        branch: '分支',
+        sync: '同步',
+        inSync: '已同步',
+        worktrees: '工作树'
+      },
+      servers: {
+        title: '服务器',
+        empty: '无 MCP 服务器',
+        loading: '加载中…',
+        more: '更多'
+      }
+    }
+  },
   externalOpenFailed: {
     title: '无法打开此链接',
     message: '没有注册用于打开此地址的浏览器。请复制链接并手动打开。',
