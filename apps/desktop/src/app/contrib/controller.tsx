@@ -328,7 +328,14 @@ registry.registerMany([
       // zone stays 'right' and keeps collapsing exactly as before.
       placement: 'main',
       collapsible: true,
-      dock: { pane: 'workspace', pos: 'right' },
+      // `enforce` makes this relationship an INVARIANT rather than a one-shot
+      // placement: the tree re-homes the rail onto the workspace anchor on
+      // EVERY boot when it is not already in that relationship
+      // (`enforceDockedPanes`). A user who drags it elsewhere keeps it there
+      // until the next launch; a boot that lands the rail somewhere else
+      // (adoption into an existing install put it inside the sessions group as
+      // a tab) is corrected instead of inherited.
+      dock: { enforce: true, pane: 'workspace', pos: 'right' },
       width: SESSION_RAIL_DEFAULT_WIDTH,
       minWidth: SESSION_RAIL_MIN_WIDTH,
       maxWidth: SESSION_RAIL_MAX_WIDTH,

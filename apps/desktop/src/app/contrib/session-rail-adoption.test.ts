@@ -1,5 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
+import type { Contribution } from '@/contrib/types'
+
 /**
  * The rail must arrive as its OWN COLUMN for EVERY user, including the ones
  * whose saved layout predates it.
@@ -12,10 +14,21 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
  * never take, and the one a first-time user would never see.
  *
  * The adoption is governed by the pane's `dock` hint, and `pos: 'right'` is an
- * EDGE SPLIT (`insertAtGroup`), so the rail becomes a sibling column.
+ * EDGE SPLIT (`insertAtGroup`), so the rail becomes a sibling column. `enforce`
+ * makes that relationship an INVARIANT re-checked on every boot, so a rail
+ * that a previous boot wedged somewhere else is re-homed.
+ *
+ * THIS FILE REPRODUCES THE REAL SHAPE. A synthetic flat row of groups is not
+ * enough: the install that actually misbehaved had a COLUMN root holding a ROW
+ * of groups — a sessions group carrying plugin panes, a workspace group, and a
+ * minimised files/review group — and the rail landed INSIDE the sessions group
+ * as a tab. A layout that only looks right in the simplest shape is not a
+ * layout.
  */
 
-describe('session rail adoption into an existing layout', () => {
+const RAIL_DATA = { dock: { enforce: true, pane: 'workspace', pos: 'right' }, placement: 'main' }
+
+describe('session rail adoption into a real install layout', () => {
   beforeEach(() => {
     window.localStorage.clear()
     vi.resetModules()
@@ -34,26 +47,46 @@ describe('session rail adoption into an existing layout', () => {
     for (const [id, data] of [
       ['sessions', { placement: 'left' }],
       ['workspace', { placement: 'main' }],
+      ['terminal', { placement: 'bottom' }],
       ['files', { placement: 'right' }],
       ['review', { placement: 'right' }]
     ] as const) {
       registry.register({ area: 'panes', data, id, render: () => null, title: id })
     }
 
-    // A layout saved BEFORE the rail existed.
+    // A layout saved BEFORE the rail existed, in the shape a real install has:
+    // a COLUMN root, a ROW of groups inside it, the sessions group carrying
+    // plugin panes, and the files/review group minimised.
     tree.declareDefaultTree(
       model.split(
-        'row',
+        'column',
         [
-          model.group(['sessions'], { id: 'grp-sessions' }),
-          model.group(['workspace'], { id: 'grp-main' }),
-          model.group(['files'], { id: 'grp-files' })
+          model.split(
+            'row',
+            [
+              model.group(['sessions', 'preview', 'hermes-bots:pane'], { id: 'g-sessions' }),
+              model.group(['workspace', 'session-tile:abc'], { id: 'g-workspace' }),
+              model.group(['files', 'review'], { id: 'g-files', minimized: true })
+            ],
+            [1, 3.2, 1.2]
+          ),
+          model.group(['terminal'], { id: 'g-terminal', minimized: true })
         ],
-        [1, 3.4, 1.25]
+        [3, 1]
       )
     )
 
     return { model, tree }
+  }
+
+  function registerRail(registry: { register: (c: Contribution) => unknown }, data = RAIL_DATA) {
+    registry.register({
+      area: 'panes',
+      data,
+      id: 'session-rail',
+      render: () => null,
+      title: 'Session'
+    } as Contribution)
   }
 
   it('adopts the rail as its own column, not a tab', async () => {
@@ -62,13 +95,7 @@ describe('session rail adoption into an existing layout', () => {
 
     // Now the rail registers — the app boots with a pane the saved layout
     // has never seen.
-    registry.register({
-      area: 'panes',
-      data: { dock: { pane: 'workspace', pos: 'right' }, placement: 'right' },
-      id: 'session-rail',
-      render: () => null,
-      title: 'Session'
-    })
+    registerRail(registry)
 
     tree.adoptContributedPanes()
 
@@ -81,17 +108,55 @@ describe('session rail adoption into an existing layout', () => {
     expect(railGroup?.panes).toEqual(['session-rail'])
   })
 
+  it('does not land in the sessions group, whatever the saved layout looks like', async () => {
+    const { model, tree } = await setup()
+    const { registry } = await import('@/contrib/registry')
+
+    registerRail(registry)
+
+    tree.adoptContributedPanes()
+
+    const live = tree.$layoutTree.get()!
+    const railGroup = model.findGroupOfPane(live, 'session-rail')
+    const sessionsGroup = model.findGroupOfPane(live, 'sessions')
+
+    expect(railGroup?.id).not.toBe(sessionsGroup?.id)
+  })
+
+  it('re-homes a rail that a previous boot wedged into the sessions group', async () => {
+    const { model, tree } = await setup()
+    const { registry } = await import('@/contrib/registry')
+
+    // The rail IS already in the tree — wedged into the sessions group, the
+    // shape the real install ended up with.
+    const live = tree.$layoutTree.get()!
+
+    const wedged = model.insertAtGroup(
+      live,
+      model.findGroupOfPane(live, 'sessions')!.id,
+      'session-rail',
+      'center'
+    )
+
+    tree.declareDefaultTree(wedged!)
+
+    registerRail(registry)
+
+    tree.adoptContributedPanes()
+
+    const after = tree.$layoutTree.get()!
+    const railGroup = model.findGroupOfPane(after, 'session-rail')
+    const sessionsGroup = model.findGroupOfPane(after, 'sessions')
+
+    expect(railGroup?.id).not.toBe(sessionsGroup?.id)
+    expect(railGroup?.panes).toEqual(['session-rail'])
+  })
+
   it('leaves the file tree visible beside the rail', async () => {
     const { model, tree } = await setup()
     const { registry } = await import('@/contrib/registry')
 
-    registry.register({
-      area: 'panes',
-      data: { dock: { pane: 'workspace', pos: 'right' }, placement: 'main' },
-      id: 'session-rail',
-      render: () => null,
-      title: 'Session'
-    })
+    registerRail(registry)
 
     tree.adoptContributedPanes()
 
@@ -108,13 +173,7 @@ describe('session rail adoption into an existing layout', () => {
     const { model, tree } = await setup()
     const { registry } = await import('@/contrib/registry')
 
-    registry.register({
-      area: 'panes',
-      data: { dock: { pane: 'workspace', pos: 'right' }, placement: 'main' },
-      id: 'session-rail',
-      render: () => null,
-      title: 'Session'
-    })
+    registerRail(registry)
 
     tree.adoptContributedPanes()
 
