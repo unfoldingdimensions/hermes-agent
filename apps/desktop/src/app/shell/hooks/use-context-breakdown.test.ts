@@ -29,6 +29,18 @@ const PRE_COMPRESSION_BREAKDOWN: ContextBreakdown = {
   estimated_total: 954_000
 }
 
+/**
+ * The agent-is-None branch's answer for a stored conversation: a measured
+ * transcript with no window (the model is not resident to report one).
+ */
+const STORED_TRANSCRIPT_BREAKDOWN: ContextBreakdown = {
+  categories: [{ color: '#7c9ef5', id: 'conversation', label: 'Conversation', tokens: 447_000 }],
+  context_max: 0,
+  context_percent: 0,
+  context_used: 447_000,
+  estimated_total: 447_000
+}
+
 const ZEROED_BREAKDOWN: ContextBreakdown = {
   categories: [],
   context_max: 0,
@@ -296,5 +308,128 @@ describe('useContextBreakdown invalidation (#94001 follow-up)', () => {
 
     expect(requestGateway).toHaveBeenCalledTimes(1)
     expect(result.current.breakdown).toEqual(PRE_COMPRESSION_BREAKDOWN)
+  })
+
+  it('serves a stored-transcript total even when the window is unknown', async () => {
+    // The agent-is-None branch measures the stored transcript and cannot know
+    // the model window without an agent. A real total is still data — refusing
+    // it here is what made every non-resident session read "not loaded".
+    const requestGateway = vi.fn().mockResolvedValue(
+      STORED_TRANSCRIPT_BREAKDOWN
+    ) as unknown as GatewayRequester
+
+    const { result } = renderHook(props => useContextBreakdown(props), {
+      initialProps: { busy: false, enabled: true, requestGateway, sessionId: 'stored' as null | string }
+    })
+
+    await flushAsync()
+
+    expect(result.current.breakdown).toEqual(STORED_TRANSCRIPT_BREAKDOWN)
+    expect(result.current.reason).toBeNull()
+    // One fetch — a usable answer is not retried.
+    expect(requestGateway).toHaveBeenCalledTimes(1)
+  })
+
+  it('restarts the ladder on invalidation instead of staying dark (dead-end fix)', async () => {
+    // The bug: once the ladder exhausted, an invalidation re-ran the fetch with
+    // `attempt` still at its final value, hit the exhausted branch immediately,
+    // and left the meter dark — so a recovered agent never repainted the rail.
+    let fail = true
+
+    const requestGateway = vi.fn(async () => {
+      if (fail) {
+        throw new Error('rpc failed')
+      }
+
+      return LIVE_BREAKDOWN
+    }) as unknown as GatewayRequester
+
+    const { result } = renderHook(props => useContextBreakdown(props), {
+      initialProps: { busy: false, enabled: true, requestGateway, sessionId: 's1' as null | string }
+    })
+
+    await flushAsync()
+
+    // Exhaust 1s, 4s, 12s.
+    for (const delay of [1_000, 4_000, 12_000]) {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(delay)
+      })
+      await flushAsync()
+    }
+
+    expect(result.current.breakdown).toBeNull()
+
+    // A reclaim invalidation fires WHILE still failing — the real sequence: the
+    // agent is gone, the reclaim bumps the generation, and the immediate refetch
+    // fails too. With the exhausted ladder this scheduled nothing, so the meter
+    // stayed dark forever. The invalidation must start a fresh ladder.
+    act(() => invalidateContextBreakdown('s1'))
+    await flushAsync()
+
+    expect(result.current.breakdown).toBeNull()
+
+    // The agent is back. Only a RE-SCHEDULED retry can pick it up: no other
+    // trigger will fire, because nothing else changed.
+    fail = false
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(1_000)
+    })
+    await flushAsync()
+
+    expect(result.current.breakdown).toEqual(LIVE_BREAKDOWN)
+  })
+
+  it('refresh() re-asks from a clean ladder after the retries exhausted', async () => {
+    let fail = true
+
+    const requestGateway = vi.fn(async () => {
+      if (fail) {
+        throw new Error('rpc failed')
+      }
+
+      return LIVE_BREAKDOWN
+    }) as unknown as GatewayRequester
+
+    const { result } = renderHook(props => useContextBreakdown(props), {
+      initialProps: { busy: false, enabled: true, requestGateway, sessionId: 's1' as null | string }
+    })
+
+    await flushAsync()
+
+    for (const delay of [1_000, 4_000, 12_000]) {
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(delay)
+      })
+      await flushAsync()
+    }
+
+    expect(result.current.breakdown).toBeNull()
+
+    // The rail's refresh button: no session change, no invalidation, just a
+    // deliberate ask. It must not re-enter the exhausted branch and no-op.
+    fail = false
+    act(() => result.current.refresh())
+    await flushAsync()
+
+    expect(result.current.breakdown).toEqual(LIVE_BREAKDOWN)
+  })
+
+  it('stops spinning as soon as an attempt settles without data', async () => {
+    // The 17s trap: `loading` stayed true for the whole ladder, so the rail
+    // showed a spinner and only then went dark. The reason should be readable
+    // straight away while retries continue in the background.
+    const requestGateway = vi.fn(async () => {
+      throw new Error('rpc failed')
+    }) as unknown as GatewayRequester
+
+    const { result } = renderHook(props => useContextBreakdown(props), {
+      initialProps: { busy: false, enabled: true, requestGateway, sessionId: 's1' as null | string }
+    })
+
+    await flushAsync()
+
+    expect(result.current.loading).toBe(false)
+    expect(result.current.reason).toBe('error')
   })
 })

@@ -35,6 +35,49 @@ def _stored_id(authority, ref) -> str:
     return ref.session_id
 
 
+def _stored_context_breakdown(authority, stored: str) -> dict:
+    """The RECOVERABLE part of a context breakdown for a session with no resident
+    agent: its stored transcript, measured, plus the model window when that is
+    knowable without a live agent.
+
+    Only the ``conversation`` category is reported. The rest of the composition —
+    system prompt, tool schemas, rules, skills, memory — belongs to the live
+    process, so for a stored conversation it could only be guessed. An absent row
+    is honest; an invented one is not, and the rail draws whatever it is given.
+    """
+    from agent.context_breakdown import _CATEGORIES, _category_label
+    from agent.model_metadata import estimate_messages_tokens_rough
+
+    model = ''
+    with contextlib.suppress(Exception):
+        model = str((authority.db.get_session(stored) or {}).get('model') or '')
+
+    conversation = 0
+    with contextlib.suppress(Exception):
+        messages = authority.db.get_messages_as_conversation(stored, include_ancestors=True)
+        conversation = max(0, int(estimate_messages_tokens_rough(messages or []) or 0))
+
+    # NO window resolution here. `get_model_context_length` resolves through
+    # endpoint probes and models.dev, and `load_config_readonly` reads the
+    # profile's config file — both are ambient I/O on an RPC the desktop polls on
+    # every idle mount, for a number that is only a percentage denominator. The
+    # measured total stands on its own; the desktop shows it without a share.
+    context_max = 0
+
+    categories = []
+    if conversation > 0:
+        categories.append({'color': _CATEGORIES.get('conversation', (None, ''))[0], 'id': 'conversation',
+                           'label': _category_label('conversation'), 'tokens': conversation})
+    return {'categories': categories,
+            'context_max': context_max,
+            'context_percent': max(0, min(100, round(conversation / context_max * 100))) if context_max else 0,
+            'context_used': conversation,
+            'context_estimated': True,
+            'context_source': 'stored_transcript',
+            'estimated_total': conversation,
+            'model': model}
+
+
 def _status(authority, ref, live, policy, agent, arg) -> str:
     """``tui_gateway/methods_session.py`` ``session.status`` on main, for the owner's session."""
     from hermes_cli.status_report import build_status_fields, status_lines
@@ -126,15 +169,20 @@ async def context_breakdown(connection, ref, params) -> dict:
         raise RuntimeStoreError('not_found')
     agent = authority.agent(ref)
     if agent is None:
-        from gateway.session_usage import stats
-        usage = await stats(connection, ref, {'session_id': ref.session_id})
-        usage = usage.get('usage') if isinstance(usage.get('usage'), dict) else usage
-        return {'categories': [], 'context_max': int(usage.get('context_max') or 0),
-                'context_percent': int(usage.get('context_percent') or 0),
-                'context_used': int(usage.get('context_used') or 0), 'estimated_total': 0,
-                'context_estimated': bool(usage.get('context_estimated', False)),
-                'context_source': str(usage.get('context_source') or 'provider_usage'),
-                'model': str(usage.get('model') or '')}
+        # No resident agent. The prompt COMPOSITION (system prompt, tool schemas,
+        # rules, skills, memory) is a property of the live process, so measuring it
+        # for a stored conversation would mean inventing what that session would
+        # have been given — don't. The TRANSCRIPT is stored and countable, and it
+        # is the dominant term (typically 95%+ of a long session's occupancy), so
+        # report that one honest category.
+        #
+        # This branch used to call `stats()` → `usage_stats(None)`, which reads
+        # every figure off a live agent and is therefore structurally zero without
+        # one. So every non-resident session answered `context_max: 0`,
+        # `context_used: 0`, `categories: []` and the desktop (correctly, given
+        # that payload) drew a dark meter for a conversation that might be
+        # hundreds of thousands of tokens long.
+        return await asyncio.to_thread(_stored_context_breakdown, authority, _stored_id(authority, ref))
     from gateway.session_authorities import owner_scope
     from gateway.session_commands import _session_workspace
     stored = _stored_id(authority, ref)

@@ -15,6 +15,7 @@
 import { useStore } from '@nanostores/react'
 import { useEffect, useMemo } from 'react'
 
+import { Codicon } from '@/components/ui/codicon'
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
@@ -33,6 +34,7 @@ import {
   visibleRailCards
 } from './card-visibility'
 import { renderRailCard } from './cards'
+import { refreshRail } from './refresh'
 
 /**
  * The profile whose hidden-card set the rail edits. Card visibility is
@@ -104,11 +106,21 @@ export function SessionRailPane() {
 
   return (
     <div className="bg-background flex h-full min-h-0 flex-col" data-slot="session-rail">
-      <div className="border-border/60 flex h-8 shrink-0 items-center gap-2 border-b px-3">
+      <div className="border-border/60 flex h-8 shrink-0 items-center gap-1 border-b px-3">
         <span className="text-muted-foreground text-[0.6875rem] font-medium tracking-wide uppercase">
           {copy.title}
         </span>
-        <span className="ml-auto">
+        <span className="ml-auto flex items-center gap-1">
+          <button
+            aria-label={copy.refresh}
+            className="text-muted-foreground hover:text-foreground rounded px-1 py-0.5 hover:bg-accent"
+            data-slot="session-rail-refresh"
+            onClick={refreshRail}
+            title={copy.refresh}
+            type="button"
+          >
+            <Codicon name="refresh" size="0.8125rem" />
+          </button>
           <CardVisibilityMenu profile={profile} />
         </span>
       </div>

@@ -21,6 +21,7 @@ import { introDe } from './intro-de'
 export const deOverrides = {
   sessionRail: {
     title: 'Sitzung',
+    refresh: 'Aktualisieren',
     configureCards: 'Karten',
     noCards: 'Keine Karten angezeigt. Über „Karten“ auswählen, welche erscheinen sollen.',
     cards: {

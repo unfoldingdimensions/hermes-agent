@@ -27,6 +27,7 @@ import { $focusedRuntimeId, $focusedWorkspaceCwd } from '@/store/session-states'
 import { $subagentsBySession } from '@/store/subagents'
 
 import type { SessionRailCardId } from './card-visibility'
+import { $railRefreshTick } from './refresh'
 
 // ---------------------------------------------------------------------------
 // Shell
@@ -101,12 +102,23 @@ function ContextCard() {
 
   // The SAME hook the statusbar gauge uses, so the rail and the gauge can never
   // disagree about the same session's occupancy.
-  const { breakdown, loading, reason } = useContextBreakdown({
+  const { breakdown, loading, reason, refresh } = useContextBreakdown({
     busy: false,
     enabled: true,
     requestGateway,
     sessionId
   })
+
+  // The rail's header refresh re-asks this card. The hook's retry ladder can
+  // exhaust and leave the meter dark with no other way back, so the tick is the
+  // escape hatch.
+  const tick = useStore($railRefreshTick)
+
+  useEffect(() => {
+    if (tick > 0) {
+      refresh()
+    }
+  }, [refresh, tick])
 
   if (!breakdown) {
     // The empty state has to be TRUE. A stored conversation that has not been
@@ -265,6 +277,9 @@ function BackgroundCard() {
   const sessionId = useStore($focusedRuntimeId)
   const bySession = useStore($subagentsBySession)
   const [cronCount, setCronCount] = useState<null | number>(null)
+    // The header refresh re-reads this card's source too — the fetch is one-shot
+    // on mount otherwise, so a stale server list could never be corrected.
+    const refreshTick = useStore($railRefreshTick)
 
   const subagents = sessionId ? (bySession[sessionId] ?? []) : []
   const running = subagents.filter(subagent => subagent.status === 'running' || subagent.status === 'queued')
@@ -288,7 +303,7 @@ function BackgroundCard() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [refreshTick])
 
   if (running.length === 0 && cronCount === null) {
     return (
@@ -328,6 +343,9 @@ function ServersCard() {
   const { t } = useI18n()
   const copy = t.sessionRail.cards.servers
   const [servers, setServers] = useState<null | { name: string; enabled: boolean; tools: string[] | null }[]>(null)
+    // The header refresh re-reads this card's source too — the fetch is one-shot
+    // on mount otherwise, so a stale server list could never be corrected.
+    const refreshTick = useStore($railRefreshTick)
 
   useEffect(() => {
     let cancelled = false
@@ -346,7 +364,7 @@ function ServersCard() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [refreshTick])
 
   if (servers === null) {
     return (
@@ -384,6 +402,9 @@ function ConnectorsCard() {
   const { t } = useI18n()
   const copy = t.sessionRail.cards.connectors
   const [platforms, setPlatforms] = useState<null | { id: string; configured: boolean; enabled: boolean }[]>(null)
+    // The header refresh re-reads this card's source too — the fetch is one-shot
+    // on mount otherwise, so a stale server list could never be corrected.
+    const refreshTick = useStore($railRefreshTick)
 
   useEffect(() => {
     let cancelled = false
@@ -402,7 +423,7 @@ function ConnectorsCard() {
     return () => {
       cancelled = true
     }
-  }, [])
+  }, [refreshTick])
 
   if (platforms === null) {
     return (

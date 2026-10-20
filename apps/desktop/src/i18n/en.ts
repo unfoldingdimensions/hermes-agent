@@ -25,6 +25,7 @@ import type { Translations } from './types'
 export const en: Translations = {
   sessionRail: {
     title: 'Session',
+    refresh: 'Refresh',
     configureCards: 'Cards',
     noCards: 'No cards shown. Use Cards to pick which ones to display.',
     cards: {

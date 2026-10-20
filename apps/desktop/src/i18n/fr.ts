@@ -21,6 +21,7 @@ import { introFr } from './intro-fr'
 export const frOverrides = {
   sessionRail: {
     title: 'Session',
+    refresh: 'Actualiser',
     configureCards: 'Cartes',
     noCards: 'Aucune carte affichée. Utilisez Cartes pour choisir celles à afficher.',
     cards: {

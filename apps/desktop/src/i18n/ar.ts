@@ -15,6 +15,7 @@ import { defineLocale, type TranslationOverrides } from './define-locale'
 export const arOverrides = {
   sessionRail: {
     title: 'الجلسة',
+    refresh: 'تحديث',
     configureCards: 'البطاقات',
     noCards: 'لا يتم عرض أي بطاقات. استخدم البطاقات لاختيار ما تريد عرضه.',
     cards: {

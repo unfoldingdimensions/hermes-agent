@@ -20,6 +20,7 @@ import { jaUpdateChannel } from './ja_update_channel'
 export const jaOverrides = {
   sessionRail: {
     title: 'セッション',
+    refresh: '更新',
     configureCards: 'カード',
     noCards: 'カードが表示されていません。「カード」から表示するものを選んでください。',
     cards: {

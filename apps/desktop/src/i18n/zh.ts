@@ -18,6 +18,7 @@ import { zhUpdateChannel } from './zh_update_channel'
 export const zhOverrides = {
   sessionRail: {
     title: '会话',
+    refresh: '刷新',
     configureCards: '卡片',
     noCards: '未显示任何卡片。使用「卡片」选择要显示的内容。',
     cards: {

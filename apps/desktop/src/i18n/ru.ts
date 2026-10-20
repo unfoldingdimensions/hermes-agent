@@ -39,6 +39,7 @@ const RU_NOUN = (count: number | string, one: string, few: string, many: string)
 export const ruOverrides = {
   sessionRail: {
     title: 'Сессия',
+    refresh: 'Обновить',
     configureCards: 'Карточки',
     noCards: 'Карточки не показаны. Выберите, какие отображать, в разделе «Карточки».',
     cards: {

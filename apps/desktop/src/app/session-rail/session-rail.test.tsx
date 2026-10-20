@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen } from '@testing-library/react'
+import { act, cleanup, fireEvent, render, screen } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { $hiddenRailCards, _resetHiddenRailCards, persistHiddenCards } from './card-visibility'
@@ -10,7 +10,8 @@ const mocks = vi.hoisted(() => ({
   getCronJobs: vi.fn(),
   getMessagingPlatforms: vi.fn(),
   breakdown: { current: null as null | Record<string, unknown> },
-  breakdownReason: { current: null as null | string }
+  breakdownReason: { current: null as null | string },
+  contextRefresh: { current: null as null | (() => void) }
 }))
 
 vi.mock('@/api/mcp', () => ({ listMcpServers: mocks.listMcpServers }))
@@ -25,7 +26,8 @@ vi.mock('@/app/shell/hooks/use-context-breakdown', () => ({
   useContextBreakdown: () => ({
     breakdown: mocks.breakdown.current,
     loading: false,
-    reason: mocks.breakdownReason.current
+    reason: mocks.breakdownReason.current,
+    refresh: () => mocks.contextRefresh.current?.()
   })
 }))
 
@@ -64,6 +66,7 @@ vi.mock('@/i18n', () => ({
     t: {
       sessionRail: {
         title: 'Session',
+        refresh: 'Refresh',
         configureCards: 'Cards',
         noCards: 'No cards shown. Use Cards to pick which ones to display.',
         cards: {
@@ -120,6 +123,23 @@ describe('SessionRailPane', () => {
 
     expect(screen.getByText('No context yet')).toBeTruthy()
     expect(screen.getByText('Working tree clean')).toBeTruthy()
+  })
+
+  it('has a header refresh that re-asks the context card', () => {
+    // The retry ladder can exhaust and leave the meter dark; the header control
+    // is the only way back without switching sessions.
+    const refresh = vi.fn()
+    mocks.contextRefresh.current = refresh
+
+    render(<SessionRailPane />)
+
+    const button = screen.getByRole('button', { name: 'Refresh' })
+
+    act(() => {
+      button.click()
+    })
+
+    expect(refresh).toHaveBeenCalled()
   })
 
   it('says the session is not loaded, rather than claiming there is no context', () => {

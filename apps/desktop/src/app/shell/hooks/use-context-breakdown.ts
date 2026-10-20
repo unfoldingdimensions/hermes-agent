@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 
 import type { ContextBreakdown } from '@/types/hermes'
 
@@ -47,9 +47,11 @@ interface ContextBreakdownOptions {
 
 /** A breakdown the backend computed from a live agent carries a real
  *  context_max (the compressor's context_length). Zero means the
- *  `agent is None` branch answered from empty metadata — not data. */
+ *  `agent is None` branch answered without a window — but that branch can
+ *  still report a measured transcript, so a usable total counts as data
+ *  even when the window is unknown. Only a payload with neither is empty. */
 function isZeroedBreakdown(breakdown: ContextBreakdown): boolean {
-  return !(breakdown.context_max > 0)
+  return !(breakdown.context_max > 0) && !(breakdown.context_used > 0)
 }
 
 const RETRY_DELAYS_MS = [1_000, 4_000, 12_000]
@@ -105,11 +107,24 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
   // Bounded retry: `attempt` indexes RETRY_DELAYS_MS; advancing it re-runs the
   // fetch effect. `exhausted` marks the end state — cached numbers evicted,
   // backoff stopped, meter dark until the next legitimate trigger (session
-  // change, turn end, or invalidation) starts a fresh ladder.
+  // change, invalidation, or a manual refresh) starts a fresh ladder.
   const [attempt, setAttempt] = useState(0)
   const [exhausted, setExhausted] = useState(false)
   const [generation, setGeneration] = useState(0)
   const [reason, setReason] = useState<ContextBreakdownReason>(null)
+  // A manual refresh re-runs the effect even when nothing else changed, and
+  // must start from a CLEAN ladder — otherwise refreshing while exhausted
+  // would re-enter the exhausted branch and change nothing.
+  const [manual, setManual] = useState(0)
+
+  /** Ask again now, from a fresh ladder. The escape hatch for a meter left
+   *  dark by an exhausted retry — the caller (the session rail's refresh
+   *  button) cannot know how many attempts were already spent. */
+  const refresh = useCallback(() => {
+    setAttempt(0)
+    setExhausted(false)
+    setManual(current => current + 1)
+  }, [])
 
   // Subscribe to invalidation bumps for THIS session: a bump from
   // invalidateContextBreakdown (post-compress, reclaim) re-runs the fetch
@@ -121,6 +136,13 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
 
     const listener = (id: string, next: number) => {
       if (id === sessionId) {
+        // Restart the ladder WITH the bump, in one update. An invalidation means
+        // the truth changed (post-compress, post-reclaim) — re-running the fetch
+        // with the previous attempt count would hit an already-exhausted ladder
+        // and leave the meter dark, defeating the invalidation's whole purpose.
+        // This is why the rail could sit empty until an unrelated session switch.
+        setAttempt(0)
+        setExhausted(false)
         setGeneration(current => (current === next ? current : next))
       }
     }
@@ -130,6 +152,11 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
     // Adopt any generation bumped before this effect subscribed (e.g. the
     // invalidation fired while the meter was hidden, or between sessions).
     const pending = invalidationGenerations.get(sessionId) ?? 0
+
+    if (pending !== 0) {
+      setAttempt(0)
+      setExhausted(false)
+    }
 
     setGeneration(current => (current === pending ? current : pending))
 
@@ -166,6 +193,11 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
     setLoading(true)
 
     const scheduleRetry = () => {
+      // The attempt settled without data. Stop the spinner NOW so the reason
+      // is readable, instead of spinning for the whole 17s ladder and then
+      // going dark; the retry keeps running in the background.
+      setLoading(false)
+
       if (attempt < RETRY_DELAYS_MS.length) {
         timer = setTimeout(() => setAttempt(a => a + 1), RETRY_DELAYS_MS[attempt])
       } else {
@@ -173,7 +205,6 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
         // pre-compression numbers are a lie (#94001).
         setFetched(null)
         setExhausted(true)
-        setLoading(false)
       }
     }
 
@@ -216,8 +247,9 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
         clearTimeout(timer)
       }
     }
-    // `attempt` + `generation` drive the refetch re-runs; everything else is a trigger.
-  }, [attempt, busy, enabled, generation, requestGateway, sessionId])
+    // `attempt` + `generation` + `manual` drive the refetch re-runs; everything
+    // else is a trigger.
+  }, [attempt, busy, enabled, generation, manual, requestGateway, sessionId])
 
   // While the retry ladder is still running, the last good breakdown stays on
   // screen (the meter ticking down beats flickering dark for a transient window);
@@ -228,6 +260,7 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
     // the first busy render must not hand out the pre-turn snapshot.
     breakdown: !busy && fetched?.sessionId === sessionId ? fetched.breakdown : null,
     loading,
-    reason
+    reason,
+    refresh
   }
 }

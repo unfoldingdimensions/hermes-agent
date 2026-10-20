@@ -16,6 +16,7 @@ import { zhHantSettings } from './zh-hant_settings'
 export const zhHantOverrides = {
   sessionRail: {
     title: '工作階段',
+    refresh: '重新整理',
     configureCards: '卡片',
     noCards: '未顯示任何卡片。使用「卡片」選擇要顯示的內容。',
     cards: {

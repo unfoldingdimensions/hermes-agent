@@ -85,6 +85,8 @@ export interface Translations extends NoticeTranslations {
    *  label those cards and their empty states. */
   sessionRail: {
     title: string
+    /** Header control: re-read every card's source now. */
+    refresh: string
     configureCards: string
     noCards: string
     cards: {

@@ -21,6 +21,7 @@ import { introEs } from './intro-es'
 export const esOverrides = {
   sessionRail: {
     title: 'Sesión',
+    refresh: 'Actualizar',
     configureCards: 'Tarjetas',
     noCards: 'No se muestran tarjetas. Usa Tarjetas para elegir cuáles mostrar.',
     cards: {
