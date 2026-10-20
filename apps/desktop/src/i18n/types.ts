@@ -115,6 +115,10 @@ export interface Translations extends NoticeTranslations {
         title: string
         /** The absolute context figure, alongside the share of the window. */
         used: string
+        /** The session exists but has no resident agent to measure. */
+        notLoaded: string
+        /** The measurement itself could not be fetched. */
+        unavailable: string
         empty: string
         loading: string
       }

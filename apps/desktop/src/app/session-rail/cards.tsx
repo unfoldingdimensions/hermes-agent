@@ -101,7 +101,7 @@ function ContextCard() {
 
   // The SAME hook the statusbar gauge uses, so the rail and the gauge can never
   // disagree about the same session's occupancy.
-  const { breakdown, loading } = useContextBreakdown({
+  const { breakdown, loading, reason } = useContextBreakdown({
     busy: false,
     enabled: true,
     requestGateway,
@@ -109,9 +109,21 @@ function ContextCard() {
   })
 
   if (!breakdown) {
+    // The empty state has to be TRUE. A stored conversation that has not been
+    // resumed into a live agent has no context to measure — but saying "No
+    // context yet" about a 122-message session is a lie the user can see
+    // through. The hook now says which of the two it is.
+    const label = loading
+      ? copy.loading
+      : reason === 'no-session' || reason === 'zeroed'
+        ? copy.notLoaded
+        : reason === 'error'
+          ? copy.unavailable
+          : copy.empty
+
     return (
       <CardShell cardId="context" trailing={loading ? <GlyphSpinner ariaLabel={copy.loading} /> : null}>
-        <EmptyRow label={loading ? copy.loading : copy.empty} />
+        <EmptyRow label={label} />
       </CardShell>
     )
   }

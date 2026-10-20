@@ -54,6 +54,21 @@ function isZeroedBreakdown(breakdown: ContextBreakdown): boolean {
 
 const RETRY_DELAYS_MS = [1_000, 4_000, 12_000]
 
+/** Why there is no breakdown right now. The meter is deliberately dark in
+ *  these states rather than showing a number it cannot stand behind, and the
+ *  REASON differs: a session with no resident agent is a different fact from
+ *  a session that simply has nothing to report. Consumers that render an
+ *  empty state (the session rail) need the difference to say something true
+ *  instead of "no context yet" about a 122-message conversation.
+ *
+ *  - `no-session` — no focused session, or the focused tile has no runtime
+ *    bound to it yet (a stored conversation that has not been resumed).
+ *  - `zeroed` — the backend answered from its agent-is-None branch: the
+ *    session exists but no agent is resident to measure.
+ *  - `error` — the fetch itself failed (a rebind race after `session.reclaimed`).
+ *  - `busy` — a turn is running; the snapshot would be pre-turn anyway. */
+export type ContextBreakdownReason = 'busy' | 'error' | 'no-session' | 'zeroed' | null
+
 /** Per-session invalidation generations. `invalidateContextBreakdown` bumps
  *  the generation for one session and notifies subscribers; the hook
  *  subscribes for its own session, so a bump re-runs the fetch immediately. */
@@ -94,6 +109,7 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
   const [attempt, setAttempt] = useState(0)
   const [exhausted, setExhausted] = useState(false)
   const [generation, setGeneration] = useState(0)
+  const [reason, setReason] = useState<ContextBreakdownReason>(null)
 
   // Subscribe to invalidation bumps for THIS session: a bump from
   // invalidateContextBreakdown (post-compress, reclaim) re-runs the fetch
@@ -138,6 +154,9 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
       // busy=false and the next RPC response (or survive a failed refresh).
       setFetched(null)
       setLoading(false)
+      // Say WHY there is nothing: a tile with no runtime bound to it is a
+      // different fact from a turn in flight.
+      setReason(!sessionId ? 'no-session' : busy ? 'busy' : null)
 
       return
     }
@@ -168,6 +187,7 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
         // rebuild window). Don't cache it — it would blank the meter now and
         // stand in for real data later. Retry on the bounded ladder instead.
         if (!breakdown || isZeroedBreakdown(breakdown)) {
+          setReason('zeroed')
           scheduleRetry()
 
           return
@@ -176,6 +196,7 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
         setFetched({ breakdown, sessionId })
         setExhausted(false)
         setLoading(false)
+        setReason(null)
       })
       .catch(() => {
         // The fetch itself failed (rebind race after session.reclaimed, etc.).
@@ -184,6 +205,7 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
           return
         }
 
+        setReason('error')
         scheduleRetry()
       })
 
@@ -205,6 +227,7 @@ export function useContextBreakdown({ busy, enabled, requestGateway, sessionId }
     // The effect clears `fetched` only after commit, so gate on `busy` here too:
     // the first busy render must not hand out the pre-turn snapshot.
     breakdown: !busy && fetched?.sessionId === sessionId ? fetched.breakdown : null,
-    loading
+    loading,
+    reason
   }
 }

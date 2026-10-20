@@ -68,6 +68,8 @@ export const ruOverrides = {
       context: {
         title: 'Контекст',
         used: 'Использовано',
+        notLoaded: 'Сессия не загружена',
+        unavailable: 'Контекст недоступен',
         empty: 'Контекста пока нет',
         loading: 'Загрузка…'
       },

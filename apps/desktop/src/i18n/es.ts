@@ -50,6 +50,8 @@ export const esOverrides = {
       context: {
         title: 'Contexto',
         used: 'Usado',
+        notLoaded: 'Sesión no cargada',
+        unavailable: 'Contexto no disponible',
         empty: 'Aún no hay contexto',
         loading: 'Cargando…'
       },

@@ -44,6 +44,8 @@ export const arOverrides = {
       context: {
         title: 'السياق',
         used: 'مستخدم',
+        notLoaded: 'الجلسة غير محمّلة',
+        unavailable: 'السياق غير متاح',
         empty: 'لا يوجد سياق بعد',
         loading: 'جارٍ التحميل…'
       },

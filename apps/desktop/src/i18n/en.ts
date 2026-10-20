@@ -54,6 +54,8 @@ export const en: Translations = {
       context: {
         title: 'Context',
         used: 'Used',
+        notLoaded: 'Session not loaded',
+        unavailable: 'Context unavailable',
         empty: 'No context yet',
         loading: 'Loading…'
       },

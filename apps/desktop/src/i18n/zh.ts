@@ -47,6 +47,8 @@ export const zhOverrides = {
       context: {
         title: '上下文',
         used: '已用',
+        notLoaded: '会话未加载',
+        unavailable: '上下文不可用',
         empty: '暂无上下文',
         loading: '加载中…'
       },

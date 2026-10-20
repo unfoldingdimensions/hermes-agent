@@ -9,7 +9,8 @@ const mocks = vi.hoisted(() => ({
   listMcpServers: vi.fn(),
   getCronJobs: vi.fn(),
   getMessagingPlatforms: vi.fn(),
-  breakdown: { current: null as null | Record<string, unknown> }
+  breakdown: { current: null as null | Record<string, unknown> },
+  breakdownReason: { current: null as null | string }
 }))
 
 vi.mock('@/api/mcp', () => ({ listMcpServers: mocks.listMcpServers }))
@@ -21,7 +22,11 @@ vi.mock('@/app/gateway/hooks/use-gateway-request', () => ({
 }))
 
 vi.mock('@/app/shell/hooks/use-context-breakdown', () => ({
-  useContextBreakdown: () => ({ breakdown: mocks.breakdown.current, loading: false })
+  useContextBreakdown: () => ({
+    breakdown: mocks.breakdown.current,
+    loading: false,
+    reason: mocks.breakdownReason.current
+  })
 }))
 
 vi.mock('@/store/coding-status', async () => {
@@ -65,7 +70,7 @@ vi.mock('@/i18n', () => ({
           background: { title: 'Background', empty: 'Nothing running', running: 'running', more: 'more', scheduled: 'Scheduled jobs' },
           changes: { title: 'Changes', clean: 'Working tree clean', staged: 'Staged', unstaged: 'Modified', untracked: 'Untracked', conflicted: 'Conflicted', lines: 'Lines' },
           connectors: { title: 'Connectors', empty: 'No connectors connected', loading: 'Loading…', on: 'On', off: 'Off' },
-          context: { title: 'Context', used: 'Used', empty: 'No context yet', loading: 'Loading…' },
+          context: { title: 'Context', used: 'Used', notLoaded: 'Session not loaded', unavailable: 'Context unavailable', empty: 'No context yet', loading: 'Loading…' },
           environment: { title: 'Environment', empty: 'No folder', folder: 'Folder', branch: 'Branch', sync: 'Sync', inSync: 'In sync', worktrees: 'Worktrees' },
           servers: { title: 'Servers', empty: 'No MCP servers', loading: 'Loading…', more: 'more' }
         }
@@ -82,6 +87,7 @@ describe('SessionRailPane', () => {
     mocks.getCronJobs.mockResolvedValue([])
     mocks.getMessagingPlatforms.mockResolvedValue({ platforms: [] })
     mocks.breakdown.current = null
+    mocks.breakdownReason.current = null
   })
 
   afterEach(() => {
@@ -114,6 +120,18 @@ describe('SessionRailPane', () => {
 
     expect(screen.getByText('No context yet')).toBeTruthy()
     expect(screen.getByText('Working tree clean')).toBeTruthy()
+  })
+
+  it('says the session is not loaded, rather than claiming there is no context', () => {
+    // A stored conversation that has not been resumed into a live agent has
+    // no context to measure — but "No context yet" about a 122-message
+    // session is a lie the user can see through.
+    mocks.breakdownReason.current = 'no-session'
+
+    render(<SessionRailPane />)
+
+    expect(screen.getByText('Session not loaded')).toBeTruthy()
+    expect(screen.queryByText('No context yet')).toBeNull()
   })
 
   it('shows the absolute context total, and EVERY category', () => {

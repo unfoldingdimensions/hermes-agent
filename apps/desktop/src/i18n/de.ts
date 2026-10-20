@@ -50,6 +50,8 @@ export const deOverrides = {
       context: {
         title: 'Kontext',
         used: 'Belegt',
+        notLoaded: 'Sitzung nicht geladen',
+        unavailable: 'Kontext nicht verfügbar',
         empty: 'Noch kein Kontext',
         loading: 'Wird geladen…'
       },

@@ -50,6 +50,8 @@ export const frOverrides = {
       context: {
         title: 'Contexte',
         used: 'Utilisé',
+        notLoaded: 'Session non chargée',
+        unavailable: 'Contexte indisponible',
         empty: 'Pas encore de contexte',
         loading: 'Chargement…'
       },

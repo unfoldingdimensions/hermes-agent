@@ -45,6 +45,8 @@ export const zhHantOverrides = {
       context: {
         title: '上下文',
         used: '已用',
+        notLoaded: '工作階段未載入',
+        unavailable: '上下文不可用',
         empty: '尚無上下文',
         loading: '載入中…'
       },

@@ -49,6 +49,8 @@ export const jaOverrides = {
       context: {
         title: 'コンテキスト',
         used: '使用済み',
+        notLoaded: 'セッション未ロード',
+        unavailable: 'コンテキスト取得不可',
         empty: 'コンテキストはまだありません',
         loading: '読み込み中…'
       },
